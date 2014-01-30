@@ -1,0 +1,6 @@
+*.swp
+*.pyc
+*.swo
+*.csv
+*.test
+node_modules/
