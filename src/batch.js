@@ -1,7 +1,6 @@
 var WebSocket = require('ws'),
     fs = require('graceful-fs'),
-    csv = require('csv'),
-    async = require('async');
+    csv = require('csv');
 
 
 // as the variables come in store them
@@ -16,6 +15,8 @@ module.exports = function (URL, FILE, OUTPUT_FILE, USERNAME, APIKEY){
         messages_sent = 0;
 
 
+
+
     var sendMessage = function(line, callback){
         // convert line to json object
         var line_object = {};
@@ -25,7 +26,7 @@ module.exports = function (URL, FILE, OUTPUT_FILE, USERNAME, APIKEY){
         // line object is the csv line in JSON format
 
         multiplier = lines_written ? lines_written : 100;
-        
+
         setTimeout(function(){
             ws.send(JSON.stringify(line_object));
             callback(false);
