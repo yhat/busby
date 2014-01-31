@@ -1,5 +1,5 @@
 var WebSocket = require('ws'),
-    fs = require('fs'),
+    fs = require('graceful-fs'),
     csv = require('csv'),
     async = require('async');
 
@@ -15,15 +15,6 @@ module.exports = function (URL, FILE, OUTPUT_FILE, USERNAME, APIKEY){
         lines_written = 0,
         messages_sent = 0;
 
-    function waitforResponse(line_object, callback) {
-        console.log(messages_sent, lines_written);
-        if (messages_sent === lines_written) { //we want it to match
-            ws.send(JSON.stringify(line_object));
-            callback(false);
-        } else {
-            setTimeout(waitforResponse(line_object, callback), 50); //wait 50 millisecnds then recheck
-        }
-    }
 
     var sendMessage = function(line, callback){
         // convert line to json object
@@ -33,11 +24,12 @@ module.exports = function (URL, FILE, OUTPUT_FILE, USERNAME, APIKEY){
         }
         // line object is the csv line in JSON format
 
-        console.log(messages_sent);
+        multiplier = lines_written ? lines_written : 100;
+        
         setTimeout(function(){
             ws.send(JSON.stringify(line_object));
             callback(false);
-        }, Math.floor(messages_sent/100));
+        }, Math.floor(messages_sent/multiplier));
         messages_sent++;
     };
 
