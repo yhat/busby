@@ -1,6 +1,6 @@
 import sys
 import pandas as pd
-import pandasjson as json
+import json
 from websocket import create_connection
 
 
@@ -24,14 +24,14 @@ def batch(url, file, output_file, username, apikey):
     df = pd.read_csv(file)
 
     ws = create_connection("ws://"+url)
-    ws.send(json.dumps({'username': username, 'apikey': apikey}))
+    ws.send(json.dumps({'username':username,'apikey':apikey}))
 
     results = []
     
     for index, row in df.iterrows():
-        data = row.to_dict()
-        ws.send(json.dumps(data))
-        result =  ws.recv()
+        data = row.to_json()
+        ws.send(data)
+        result = ws.recv()
         results.append(json.loads(result))
 
     ws.close()
