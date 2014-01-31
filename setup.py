@@ -11,5 +11,5 @@ setup(
     install_requires=[
         "websocket-client==0.12.0",
         "docopt==0.6.1"
-    ],
+    ]
 )
