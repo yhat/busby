@@ -23,11 +23,11 @@ def batch(url, file, output_file, username, apikey):
     """
     df = pd.read_csv(file)
 
-    ws = create_connection("ws://"+url)
-    ws.send(json.dumps({'username':username,'apikey':apikey}))
+    ws = create_connection("ws://" + url)
+    ws.send(json.dumps({'username': username, 'apikey': apikey}))
 
     results = []
-    
+
     for index, row in df.iterrows():
         data = row.to_json()
         ws.send(data)
@@ -36,7 +36,7 @@ def batch(url, file, output_file, username, apikey):
 
     ws.close()
     df = pd.DataFrame(results)
-    
+
     try:
         with open(output_file):
             headers = False
