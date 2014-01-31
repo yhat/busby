@@ -1,5 +1,4 @@
 import sys
-import pprint as pp
 import pandas as pd
 import json
 from websocket import create_connection
