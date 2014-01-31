@@ -3,7 +3,7 @@ from setuptools import find_packages
 
 setup(
     name='busby',
-    version='0.3',
+    version='0.4',
     author="Jessie Frazelle",
     author_email="jessie@yhathq.com",
     url="https://github.com/yhat/busby",

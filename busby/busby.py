@@ -22,6 +22,7 @@ def batch(url, file, output_file, username, apikey):
         apikey for authentication
     """
     df = pd.read_csv(file)
+    df = df.where(pd.notnull(df), None)
 
     ws = create_connection("ws://"+url)
     ws.send(json.dumps({'username': username, 'apikey': apikey}))
