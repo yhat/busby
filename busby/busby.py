@@ -1,21 +1,9 @@
-"""batch-stream
-
-Usage:
-  batch.py <url> <file> <output_file> <username> <apikey>
-  batch.py (-h | --help)
-  batch.py --version
-
-Options:
-  -h --help     Show this screen.
-  --version     Show version.
-"""
-
 import sys
 import pprint as pp
 import pandas as pd
 import json
 from websocket import create_connection
-from docopt import docopt
+
 
 def batch(url, file, output_file, username, apikey):
     """
@@ -58,10 +46,3 @@ def batch(url, file, output_file, username, apikey):
 
     with open(output_file, 'ab') as f:
         df.to_csv(f, index=False, header=headers)
-    
-
-
-if __name__ == '__main__':
-    arguments = docopt(__doc__, version='batch-stream 1.0')
-    batch(arguments['<url>'], arguments['<file>'], arguments['<output_file>'],
-          arguments['<username>'], arguments['<apikey>'])
