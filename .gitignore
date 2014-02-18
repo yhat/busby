@@ -37,8 +37,7 @@ nosetests.xml
 *.swp
 *.swo
 
-*.csv
-*.test
+test/
 
 venv
 .DS_Store

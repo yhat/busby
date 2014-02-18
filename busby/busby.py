@@ -16,6 +16,22 @@ def flatten(d, parent_key=''):
     return dict(items)
 
 
+def flatten_other(structure, key="", path="", flattened=None):
+    if flattened is None:
+        flattened = {}
+    if type(structure) not in(dict, list):
+        flattened[((path + "_") if path else "") + key] = structure
+    elif isinstance(structure, list):
+        for i, item in enumerate(structure):
+            flatten_other(item, "%d" % i, "".join(filter(None, [path, key])),
+                          flattened)
+    else:
+        for new_key, value in structure.items():
+            flatten_other(value, new_key, "".join(filter(None, [path, key])),
+                          flattened)
+    return flattened
+
+
 def value_list(x):
     # if dict put values in list
     if type(x) is dict:
@@ -30,8 +46,12 @@ def value_list(x):
             flat = flatten(x)
             return list(set(flat.values()))
         elif nested_values:
-            flat = sorted({a for v in x.itervalues() for a in v})
-            return flat
+            try:
+                flat = sorted({a for v in x.itervalues() for a in v})
+                return flat
+            except:
+                flat = flatten_other(x)
+                return list(set(flat.values()))
         else:
             return list(set(x.values()))
     # if string put in list
@@ -74,7 +94,12 @@ def batch(url, file, output_file, username, apikey):
         del result['yhat_id']
         # change, dict, string, etc into list
         result = value_list(result)
-        results.append(result)
+        encoded = []
+        for s in result:
+            if isinstance(s, basestring):
+                s = s.encode('utf8')
+            encoded.append(s)
+        results.append(encoded)
 
     ws.close()
 
