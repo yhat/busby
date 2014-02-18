@@ -39,3 +39,6 @@ nosetests.xml
 
 *.csv
 *.test
+
+venv
+.DS_Store
