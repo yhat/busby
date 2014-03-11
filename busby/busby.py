@@ -1,36 +1,8 @@
 import pandas as pd
 import json
-import csv
+import sys
 from websocket import create_connection
-
-
-def flatten(structure, key="", path="", flattened=None):
-    if flattened is None:
-        flattened = {}
-    if type(structure) not in(dict, list):
-        flattened[((path + "_") if path else "") + key] = structure
-    elif isinstance(structure, list):
-        for i, item in enumerate(structure):
-            flatten(item, "%d" % i, "".join(filter(None, [path, key])),
-                    flattened)
-    else:
-        for new_key, value in structure.items():
-            flatten(value, new_key, "".join(filter(None, [path, key])),
-                    flattened)
-    return flattened
-
-
-def value_list(x):
-    # if dict put values in list
-    if type(x) is dict:
-        flat = flatten(x)
-        return list(set(flat.values()))
-    # if string put in list
-    elif isinstance(x, basestring):
-        return [x]
-    else:
-        return x
-
+import os.path
 
 def batch(url, file, output_file, username, apikey):
     """
@@ -49,31 +21,44 @@ def batch(url, file, output_file, username, apikey):
     apikey: string
         apikey for authentication
     """
-    df = pd.read_csv(file)
+    try:
+        # Read csv file to DataFrame. No indices, each column is maintained
+        # as a column (as opposed to pd.DataFrame.from_csv())
+        df = pd.read_csv(file)
+    except Exception as e:
+        with open(output_file,'w') as f:
+            f.write("[ERROR] Could not parse input csv file.\n")
+            f.write("[ERROR] Parsing error:\n%s\n" % str(e))
 
     ws = create_connection("ws://" + url)
     ws.send(json.dumps({'username': username, 'apikey': apikey}))
 
-    results = []
-
-    for index, row in df.iterrows():
-        data = row.to_json()
-        ws.send(data)
-        result = ws.recv()
-        result = json.loads(result)
-        # remove yhat_id
-        del result['yhat_id']
-        # change, dict, string, etc into list
-        result = value_list(result)
-        encoded = []
-        for s in result:
-            if isinstance(s, basestring):
-                s = s.encode('utf8')
-            encoded.append(s)
-        results.append(encoded)
-
+    # Typecast to avoid json errors
+    df = df.astype(object)
+    # To maintain compatibility with R this encoding is used
+    data = json.dumps(df.to_dict('list'))
+    ws.send(data)
+    
+    result = ws.recv()
     ws.close()
 
-    with open(output_file, 'ab') as f:
-        w = csv.writer(f)
-        w.writerows(results)
+    result = json.loads(result)
+    try:
+        result_df = pd.DataFrame(result['result'])
+        # If mutlifile batch job then concat existing file with current df
+        # since to_csv() will overwrite existing file (not append)
+        if os.path.isfile(output_file):
+            old_df = pd.read_csv(output_file)
+            result_df = pd.concat((old_df,result_df))
+        result_df.to_csv(output_file,index=False)
+    except KeyError: # No 'result' field in response
+        with open(output_file,'w') as f:
+            f.write("[ERROR] No 'result' field in response! Are you passing valid JSON?\n")
+            f.write("[ERROR] Websocket response:\n%s\n" % json.dumps(result,indent=2))
+    except ValueError: # Result could not be converted to dataframe
+        with open(output_file,'w') as f:
+            f.write("[ERROR] Result could not be converted to pandas DataFrame\n")
+            f.write("[ERROR] Model result:\n%s\n" % json.dumps(result['result'],indent=2))
+    except Exception: # General exception
+        with open(output_file,'w') as f:
+            f.write("[ERROR] Internal error: Could not process batch request\n")
