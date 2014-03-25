@@ -4,6 +4,25 @@ import sys
 from websocket import create_connection
 import os.path
 
+def replace_nan(json_obj,parent=None,key=None):
+    """In place replacement of null values (like NaN) with None
+
+    json_obj: loaded json object
+
+    parent: parent of json object
+
+    key: key of json object for the parent
+    """
+    if type(json_obj) is dict:
+        for k,v in json_obj.iteritems():
+            replace_nan(v,parent=json_obj,key=k)
+    elif type(json_obj) is list:
+        for i,v in enumerate(json_obj):
+            replace_nan(v,parent=json_obj,key=i)
+    else:
+        if pd.isnull(json_obj):
+            parent[key] = None
+
 def batch(url, file, output_file, username, apikey):
     """
     Parse a csv file and send through a websocket.
@@ -33,17 +52,20 @@ def batch(url, file, output_file, username, apikey):
     ws = create_connection("ws://" + url)
     ws.send(json.dumps({'username': username, 'apikey': apikey}))
 
-    # Typecast to avoid json errors
     df = df.astype(object)
-    # To maintain compatibility with R this encoding is used
-    data = json.dumps(df.to_dict('list'))
+    df_dict = df.to_dict('list')
+
+    # Replace nan's with None values (done in place)
+    replace_nan(df_dict)
+
+    data = json.dumps(df_dict)
+
     ws.send(data)
-    
+
     result = ws.recv()
     ws.close()
-
-    result = json.loads(result)
     try:
+        result = json.loads(result)
         result_df = pd.DataFrame(result['result'])
         # If mutlifile batch job then concat existing file with current df
         # since to_csv() will overwrite existing file (not append)
