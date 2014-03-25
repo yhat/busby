@@ -14,6 +14,6 @@ Options:
 from docopt import docopt
 from busby import batch
 
-arguments = docopt(__doc__, version='busby 0.9')
+arguments = docopt(__doc__, version='busby 0.10')
 batch(arguments['<url>'], arguments['<file>'], arguments['<output_file>'],
     arguments['<username>'], arguments['<apikey>'])
