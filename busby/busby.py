@@ -2,26 +2,8 @@ import pandas as pd
 import json
 import sys
 from websocket import create_connection
+from collections import OrderedDict
 import os.path
-
-def replace_nan(json_obj,parent=None,key=None):
-    """In place replacement of null values (like NaN) with None
-
-    json_obj: loaded json object
-
-    parent: parent of json object
-
-    key: key of json object for the parent
-    """
-    if type(json_obj) is dict:
-        for k,v in json_obj.iteritems():
-            replace_nan(v,parent=json_obj,key=k)
-    elif type(json_obj) is list:
-        for i,v in enumerate(json_obj):
-            replace_nan(v,parent=json_obj,key=i)
-    else:
-        if pd.isnull(json_obj):
-            parent[key] = None
 
 def batch(url, file, output_file, username, apikey):
     """
@@ -48,17 +30,16 @@ def batch(url, file, output_file, username, apikey):
         with open(output_file,'w') as f:
             f.write("[ERROR] Could not parse input csv file.\n")
             f.write("[ERROR] Parsing error:\n%s\n" % str(e))
+        sys.exit(2)
+
+    # Replicates methodology used in yhat's df_to_json()
+    data = df.transpose().to_json(orient='values',date_format='iso')
+    data = json.loads(data)
+    data = OrderedDict(zip(df.columns,data))
+    data = json.dumps(data)
 
     ws = create_connection("ws://" + url)
     ws.send(json.dumps({'username': username, 'apikey': apikey}))
-
-    df = df.astype(object)
-    df_dict = df.to_dict('list')
-
-    # Replace nan's with None values (done in place)
-    replace_nan(df_dict)
-
-    data = json.dumps(df_dict)
 
     ws.send(data)
 
