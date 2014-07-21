@@ -3,7 +3,7 @@ from setuptools import find_packages
 
 setup(
     name='busby',
-    version='0.11',
+    version='1.0.0',
     author="Jessie Frazelle",
     author_email="jessie@yhathq.com",
     url="https://github.com/yhat/busby",
@@ -13,8 +13,7 @@ setup(
     long_description=open('README.rst').read(),
     scripts=['bin/busby'],
     install_requires=[
-        "websocket-client==0.12.0",
-        "docopt==0.6.1",
-        "pandas==0.13.0"
+        "websocket-client==0.16.0",
+        "docopt==0.6.1"
     ]
 )

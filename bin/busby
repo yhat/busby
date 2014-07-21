@@ -3,7 +3,9 @@
 """busby
 
 Usage:
-  busby <url> <file> <output_file> <username> <apikey>
+  busby parse <type> <delim>
+  busby chunk <infile> <outfile> <endpoint> <delim> <n>
+  busby row <infile> <outfile> <endpoint> <delim>
   busby (-h | --help)
   busby --version
 
@@ -12,8 +14,31 @@ Options:
   --version     Show version.
 """
 from docopt import docopt
-from busby import batch
+from busby import parse_rows, parse_chunk, chunk_by_chunk, row_by_row
+import sys
 
-arguments = docopt(__doc__, version='busby 0.11')
-batch(arguments['<url>'], arguments['<file>'], arguments['<output_file>'],
-    arguments['<username>'], arguments['<apikey>'])
+args = docopt(__doc__, version='busby 1.0.0')
+# parse delimiter
+if args["<delim>"] == "comma":
+    delim = ','
+elif args["<delim>"] == "tab":
+    delim = '\t'
+elif args["<delim>"] == "space":
+    delim = ' '
+else:
+    print "Accepted delimiters are: comma, tab, space"
+    sys.exit(2)
+
+if args['parse']:
+    if args['<type>'] == "row":
+        parse_rows(delim, '"')
+    elif args['<type>'] == "chunk":
+        parse_chunk(delim, '"')
+
+elif args["chunk"]:
+    chunk_by_chunk(args["<infile>"], args["<outfile>"], args["<endpoint>"],
+                   int(args["<n>"]), delim, '"')
+elif args["row"]:
+    row_by_row(args["<infile>"], args["<outfile>"], args["<endpoint>"],
+               delim, '"')
+
